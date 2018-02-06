@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+# Condor submission script to produce Phase-2 ntuples
+
+set -e -o pipefail
+
+# Get positional arguments
+sample_server="${1}"
+sample_file="${2}"
+sample_name="${3}"
+sample_xs="${4}"
+cluster="${5}"
+process="${6}"
+#outdir=daf/c"${cluster}"/p"$(printf "%05d\n" "${process}")"
+outdir=production999
+eosoutdir=/eos/uscms/store/user/bschneid/analysis/upgrade/"${outdir}"
+
+pwd="${PWD}"
+
+echo Hello Condor
+echo
+
+echo "Date: $(date)"
+echo "Worker node: $(uname -a)"
+echo "Operating system: $(cat /etc/redhat-release)"
+echo "Sample server: ${sample_server}"
+echo "Sample file: ${sample_file}"
+echo "Sample name: ${sample_name}"
+echo "Sample xs: ${sample_xs}"
+echo "Working directory: ${pwd}"
+echo "Output directory: ${outdir}"
+echo "EOS output directory: ${eosoutdir}"
+echo "Cluster number: ${cluster}"
+echo "Process number: ${process}"
+echo
+
+# Create output dummy file that can be transferred back
+# HTCondor has a bug, it always needs to transfer at least one file back
+# This can cause it to overwrite stuff, so we just create a dummy file, that
+# happily can be transferred and overwritten
+touch condor_output_dummy
+
+# Unpack tarball
+tar xf tarball_daf.tar.gz
+
+# Set up CMSSW
+pushd DAnalysis_framework/CMSSW_8_0_4/src/
+scram b ProjectRename
+eval $(scram runtime -sh)
+popd
+
+cd DAF
+mkdir "${outdir}"
+
+# Build config just for this sample
+cat << EOF >> config.txt
+[config-begin]
+    Outputdir = ./${outdir}
+    Outputfile = outputfile.root
+    Samplesdir = ${sample_server}/
+    Lumi       = 3000
+    Testmode   = false
+    Maxchilds  = 1
+    RunOnOutputOnly = false
+[config-end]
+[inputfiles-begin]
+    ${sample_file} , ${sample_name} , 616 , ${sample_xs} , auto , 1 , false
+[inputfiles-end]
+EOF
+
+# Set up DAF and compile it
+. ./env.sh
+make 2>&1 | tee make.out
+
+# Check if compilation succeeded
+if [ "$?" -ne 0 ]; then
+    echo "Compilation failed."
+    echo "Exit."
+    exit 1
+fi
+
+./SUSY_Upgrade_Skimmer config.txt 2>&1 | tee -a run.out
+
+# Copy output rootfiles to eos
+echo Copy output to eos.
+cd "${outdir}"
+xrdfs root://cmseos.fnal.gov/ mkdir -p "${eosoutdir}"
+for rootfile in *.root; do
+    echo Copy rootfile "${rootfile}".
+    # Since copying to eos often fails for no obvious reason, brute force the copy
+    for i in {1..10}; do
+        xrdcp -fs "${rootfile}" root://cmseos.fnal.gov/"${eosoutdir}" \
+            && break \
+            || echo xrdcp try "${i}" for file "${rootfile}" failed.
+    done
+done
+
+echo Bye.

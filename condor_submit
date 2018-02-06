@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+# Analyze Delphes samples
+name_submission_script=condor_daf_submission
+config_folder=../DAF/config/
+
+rm -f "${name_submission_script}"
+
+## Check if positional parameters are accepted
+#accepted_parameters=(DY)
+#for parameter; do
+#    if [[ ! "${accepted_parameters[@]}" =~ "${parameter}" ]]; then
+#        echo "Positional parameter ${parameter} not accepted."
+#        echo "Exit."
+#        exit 1
+#    fi
+#done
+#
+#for parameter; do
+#    if [ "${parameter}" == DY ]; then
+#
+
+# Define arrays with samples
+Bj=(configSkimmer_v342pre05.txt Bj-4p)
+tt=(configSkimmer_v342pre05.txt tt-4p)
+DY2=(configSkimmer_v342pre07_run2.txt DYJetsToLL)
+Wj2=(configSkimmer_v342pre07_run2.txt WJetsToLNu_HT)
+WW=(configSkimmer_v342pre07_run2.txt WWTo2L2Nu)
+TChiWZ=(configSkimmer_v342pre07_signal.txt TChiWZOff_C1N2)
+DYnJets=(configSkimmer_v342pre07.txt DYToLL-M-50_)
+DYM10to50=(configSkimmer_v342pre07.txt DYJetsToLL_M-10to50)
+WjnJets=(configSkimmer_v342pre07.txt WToLNu_)
+TTIncl=(configSkimmer_v342pre07.txt TT_TuneCUETP8M2T4)
+
+# Create 2d array with samples you want to run over
+#samples=("${Bj[@]}" "${tt[@]}" "${DY2[@]}" "${Wj2[@]}" "${WW[@]}" "${TChiWZ[@]}")
+#samples=("${DYnJets[@]}" "${DYM10to50[@]}" "${WjnJets[@]}" "${TTIncl[@]}")
+samples=("${Bj[@]}")
+
+# Fill default values to submission script
+cat << EOF >> "${name_submission_script}"
+universe = vanilla
+Executable = condor_daf
+Requirements = OpSys == "LINUX" && (Arch != "DUMMY" )
+request_disk = 10000000
+request_memory = 3000
+Transfer_Input_Files = condor_daf, tarball_daf.tar.gz
+notification = Never
+Should_Transfer_Files = YES
+WhenToTransferOutput = ON_EXIT
+Transfer_Output_Files = condor_output_dummy
+x509userproxy = \$ENV(X509_USER_PROXY)
+Output = logs/condor_\$(Cluster).\$(Process).stdout
+Error = logs/condor_\$(Cluster).\$(Process).stderr
+Log = logs/condor_\$(Cluster).\$(Process).condor
+EOF
+
+# Loop over samples
+for (( i=0; i<"${#samples[@]}"; i+=2 )); do
+    config="${config_folder}"/"${samples[i]}"
+    sample_nick="${samples[i+1]}"
+    echo "Lookup ${sample_nick} in ${config}."
+    # Loop over directories of samples
+    for sample_subdir in $(awk "/^\\\$${sample_nick}/ {print(\$1)}" "${config}"); do
+        sample_subdir="${sample_subdir#$}"
+        sample_subdir="${sample_subdir%/}"
+        sample_dir=$(awk "/^ *Samplesdir/ {print(\$3)}" "${config}")
+        sample_name=$(awk "/${sample_subdir}/ {print(\$3)}" "${config}")
+        sample_xs=$(awk "/${sample_subdir}/ {print(\$7)}" "${config}")
+        sample_server="${sample_dir%%/store/*}"
+        sample_dir="${sample_dir#root://*/}"
+        echo "Found ${sample_name} in ${sample_subdir} with xs = ${sample_xs}."
+        echo -n "Querying root files... "
+        no_rootfiles=0
+        # Loop over root files in directories of samples
+        for sample_file in $(xrdfs "${sample_server}" ls "${sample_dir}/${sample_subdir}/"); do
+            echo "Arguments = ${sample_server} ${sample_file} ${sample_name} ${sample_xs} \$(Cluster) \$(Process)" >> "${name_submission_script}"
+            echo 'Queue 1' >> "${name_submission_script}"
+            (( no_rootfiles++ ))
+        done
+        echo "Found ${no_rootfiles} root files."
+    done
+done
+
+# Submit
+echo condor_submit "${name_submission_script}"
+
+# Don't delete submission script for now
+#rm -f "${name_submission_script}"
