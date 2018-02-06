@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Create tarball for signal production
+
+set -e -o pipefail
+
+trap 'echo Failed to create tarball' ERR
+
+pushd .. &>/dev/null
+
+nameTarball=condor/tarball_daf.tar.gz
+
+# Delete old tarball
+rm -f "${nameTarball}"
+
+# Create new tarball
+echo -n "Create tarball... "
+tar czf "${nameTarball}" DAF/ DAnalysis_framework/
+echo "Done."
+
+popd &>/dev/null
