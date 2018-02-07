@@ -17,7 +17,7 @@ eosoutdir=/eos/uscms/store/user/bschneid/analysis/upgrade/"${outdir}"
 
 pwd="${PWD}"
 
-echo Hello Condor
+echo "Hello Condor"
 echo
 
 echo "Date: $(date)"
@@ -109,18 +109,24 @@ set +e
 set -e
 
 # Copy output rootfiles to eos
-echo Copy output to eos.
+echo "Copy output to eos."
 cd "${outdir}"
 rm outputfile.root
 mv *.root "${sample_name}_${process}.root"
 xrdfs root://cmseos.fnal.gov/ mkdir -p "${eosoutdir}"
 for rootfile in *.root; do
-    echo Copy rootfile "${rootfile}".
+    echo "Copy rootfile ${rootfile}."
     # Since copying to eos often fails for no obvious reason, brute force the copy
     for i in {1..10}; do
-        xrdcp -fs "${rootfile}" root://cmseos.fnal.gov/"${eosoutdir}" \
-            && break \
-            || echo xrdcp try "${i}" for file "${rootfile}" failed.
+        if xrdcp -fs "${rootfile}" root://cmseos.fnal.gov/"${eosoutdir}"; then
+            break
+        else
+            echo "xrdcp try ${i} for file ${rootfile} failed."
+            if [ "${i}" -eq 10 ]; then
+                echo "Give up."
+                exit 2
+            fi
+        fi
     done
 done
 
