@@ -96,7 +96,7 @@ EOF
 
 # Set up DAF and compile it
 . ./env.sh
-make 2>&1 | tee make.out
+make
 
 # Check if compilation succeeded
 if [ "$?" -ne 0 ]; then
@@ -105,7 +105,7 @@ if [ "$?" -ne 0 ]; then
     exit 1
 fi
 
-./SUSY_Upgrade_Skimmer config.txt 2>&1 | tee -a run.out
+./SUSY_Upgrade_Skimmer config.txt
 
 # Copy output rootfiles to eos
 echo Copy output to eos.
