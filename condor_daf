@@ -2,8 +2,7 @@
 
 # Condor submission script to produce Phase-2 ntuples
 
-#set -e -o pipefail
-set -o pipefail
+set -e -o pipefail
 
 # Get positional arguments
 sample_server="${1}"
@@ -105,7 +104,9 @@ if [ "$?" -ne 0 ]; then
     exit 1
 fi
 
+set +e
 ./SUSY_Upgrade_Skimmer config.txt
+set -e
 
 # Copy output rootfiles to eos
 echo Copy output to eos.
