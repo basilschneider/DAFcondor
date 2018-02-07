@@ -2,7 +2,8 @@
 
 # Condor submission script to produce Phase-2 ntuples
 
-set -e -o pipefail
+#set -e -o pipefail
+set -o pipefail
 
 # Get positional arguments
 sample_server="${1}"
@@ -12,7 +13,7 @@ sample_xs="${4}"
 cluster="${5}"
 process="${6}"
 #outdir=daf/c"${cluster}"/p"$(printf "%05d\n" "${process}")"
-outdir=production999
+outdir=production"${cluster}"
 eosoutdir=/eos/uscms/store/user/bschneid/analysis/upgrade/"${outdir}"
 
 pwd="${PWD}"
@@ -41,13 +42,38 @@ echo
 touch condor_output_dummy
 
 # Unpack tarball
+echo -n "Unpack tarball... "
 tar xf tarball_daf.tar.gz
+echo "Done."
 
 # Set up CMSSW
-pushd DAnalysis_framework/CMSSW_8_0_4/src/
+echo -n "Set up CMSSW... "
+pushd DAnalysis_framework/CMSSW_8_0_4/src/ >/dev/null
 scram b ProjectRename
 eval $(scram runtime -sh)
 popd
+echo "Done."
+
+# Compile Delphes
+echo -n "Compile Delphes... "
+pushd DAnalysis_framework/delphes_3.3.3pre16/delphes/ >/dev/null
+make clean
+make
+popd
+echo "Done."
+
+# Compile DAnalysis_framework in a subshell
+echo -n "Compile DAnalysis_framework... "
+(
+    cd DAnalysis_framework/v.1.1_rc2/
+    ls -l
+    . ./env_donttouch
+    cd DAnalysis/
+    . ./env.sh
+    make clean
+    make
+)
+echo "Done."
 
 cd DAF
 mkdir "${outdir}"
@@ -84,6 +110,8 @@ fi
 # Copy output rootfiles to eos
 echo Copy output to eos.
 cd "${outdir}"
+rm outputfile.root
+mv *.root "${sample_name}_${process}.root"
 xrdfs root://cmseos.fnal.gov/ mkdir -p "${eosoutdir}"
 for rootfile in *.root; do
     echo Copy rootfile "${rootfile}".

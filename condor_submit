@@ -6,20 +6,6 @@ config_folder=../DAF/config/
 
 rm -f "${name_submission_script}"
 
-## Check if positional parameters are accepted
-#accepted_parameters=(DY)
-#for parameter; do
-#    if [[ ! "${accepted_parameters[@]}" =~ "${parameter}" ]]; then
-#        echo "Positional parameter ${parameter} not accepted."
-#        echo "Exit."
-#        exit 1
-#    fi
-#done
-#
-#for parameter; do
-#    if [ "${parameter}" == DY ]; then
-#
-
 # Define arrays with samples
 Bj=(configSkimmer_v342pre05.txt Bj-4p)
 tt=(configSkimmer_v342pre05.txt tt-4p)
@@ -83,7 +69,7 @@ for (( i=0; i<"${#samples[@]}"; i+=2 )); do
 done
 
 # Submit
-echo condor_submit "${name_submission_script}"
+condor_submit "${name_submission_script}"
 
 # Don't delete submission script for now
 #rm -f "${name_submission_script}"
