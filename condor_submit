@@ -18,7 +18,7 @@ DYM10to50=(configSkimmer_v342pre07.txt DYJetsToLL_M-10to50)
 WjnJets=(configSkimmer_v342pre07.txt WToLNu_)
 TTIncl=(configSkimmer_v342pre07.txt TT_TuneCUETP8M2T4)
 
-# Create 2d array with samples you want to run over
+# Create array with samples you want to run over
 #samples=("${Bj[@]}" "${tt[@]}" "${DY2[@]}" "${Wj2[@]}" "${WW[@]}" "${TChiWZ[@]}")
 samples=("${DYnJets[@]}" "${DYM10to50[@]}" "${WjnJets[@]}" "${TTIncl[@]}")
 #samples=("${Bj[@]}")
