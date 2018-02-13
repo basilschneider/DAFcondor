@@ -53,14 +53,15 @@ for (( i=0; i<"${#samples[@]}"; i+=2 )); do
         sample_dir=$(awk "/^ *Samplesdir/ {print(\$3)}" "${config}")
         sample_name=$(awk "/${sample_subdir}/ {print(\$3)}" "${config}")
         sample_xs=$(awk "/${sample_subdir}/ {print(\$7)}" "${config}")
+        sample_entries=$(awk "/${sample_subdir}/ {print(\$9)}" "${config}")
         sample_server="${sample_dir%%/store/*}"
         sample_dir="${sample_dir#root://*/}"
-        echo "Found ${sample_name} in ${sample_subdir} with xs = ${sample_xs}."
+        echo "Found ${sample_name} in ${sample_subdir} with xs = ${sample_xs} and entries = ${sample_entries}."
         echo -n "Querying root files... "
         no_rootfiles=0
         # Loop over root files in directories of samples
         for sample_file in $(xrdfs "${sample_server}" ls "${sample_dir}/${sample_subdir}/"); do
-            echo "Arguments = ${sample_server} ${sample_file} ${sample_name} ${sample_xs} \$(Cluster) \$(Process)" >> "${name_submission_script}"
+            echo "Arguments = ${sample_server} ${sample_file} ${sample_name} ${sample_xs} ${sample_entries} \$(Cluster) \$(Process)" >> "${name_submission_script}"
             echo 'Queue 1' >> "${name_submission_script}"
             (( no_rootfiles++ ))
         done

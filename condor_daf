@@ -9,8 +9,9 @@ sample_server="${1}"
 sample_file="${2}"
 sample_name="${3}"
 sample_xs="${4}"
-cluster="${5}"
-process="${6}"
+sample_entries="${5}"
+cluster="${6}"
+process="${7}"
 #outdir=daf/c"${cluster}"/p"$(printf "%05d\n" "${process}")"
 outdir=production"${cluster}"
 eosoutdir=/eos/uscms/store/user/bschneid/analysis/upgrade/"${outdir}"
@@ -27,6 +28,7 @@ echo "Sample server: ${sample_server}"
 echo "Sample file: ${sample_file}"
 echo "Sample name: ${sample_name}"
 echo "Sample xs: ${sample_xs}"
+echo "Sample entries: ${sample_entries}"
 echo "Working directory: ${pwd}"
 echo "Output directory: ${outdir}"
 echo "EOS output directory: ${eosoutdir}"
@@ -89,7 +91,7 @@ cat << EOF >> config.txt
     RunOnOutputOnly = false
 [config-end]
 [inputfiles-begin]
-    ${sample_file} , ${sample_name} , 616 , ${sample_xs} , auto , 1 , false
+    ${sample_file} , ${sample_name} , 616 , ${sample_xs} , ${sample_entries} , 1 , false
 [inputfiles-end]
 EOF
 
