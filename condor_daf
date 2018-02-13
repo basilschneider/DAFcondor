@@ -132,4 +132,4 @@ for rootfile in *.root; do
     done
 done
 
-echo Bye.
+echo "Bye."
