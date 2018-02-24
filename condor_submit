@@ -49,13 +49,18 @@ for (( i=0; i<"${#samples[@]}"; i+=2 )); do
     sample_nick="${samples[i+1]}"
     echo "Lookup ${sample_nick} in ${config}."
     # Loop over directories of samples
-    for sample_subdir in $(awk "/^\\\$${sample_nick}/ {print(\$1)}" "${config}"); do
+    for sample_subdir_line in $(awk "BEGIN{OFS=\"|\"}; /^\\\$${sample_nick}/ {print(\$1, NR)}" "${config}"); do
+        # sample_subdir_line should look like "sample|n", where "sample" is the
+        # name of the sample and "n" is the line in which it is defined in the
+        # config; we now need to separate these variables
+        sample_subdir="${sample_subdir_line%|*}"
+        sample_line="${sample_subdir_line##*|}"
         sample_subdir="${sample_subdir#$}"
         sample_subdir="${sample_subdir%/}"
         sample_dir=$(awk "/^ *Samplesdir/ {print(\$3)}" "${config}")
-        sample_name=$(awk "/${sample_subdir}/ {print(\$3)}" "${config}")
-        sample_xs=$(awk "/${sample_subdir}/ {print(\$7)}" "${config}")
-        sample_entries=$(awk "/${sample_subdir}/ {print(\$9)}" "${config}")
+        sample_name=$(awk "NR==${sample_line} {print(\$3)}" "${config}")
+        sample_xs=$(awk "NR==${sample_line} {print(\$7)}" "${config}")
+        sample_entries=$(awk "NR==${sample_line} {print(\$9)}" "${config}")
         sample_server="${sample_dir%%/store/*}"
         sample_dir="${sample_dir#root://*/}"
         echo "Found ${sample_name} in ${sample_subdir} with xs = ${sample_xs} and entries = ${sample_entries}."
