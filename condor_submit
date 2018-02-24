@@ -73,6 +73,18 @@ for (( i=0; i<"${#samples[@]}"; i+=2 )); do
             (( no_rootfiles++ ))
         done
         echo "Found ${no_rootfiles} root files."
+        # If no_rootfiles is larger than 1, then check if sample_entries is a
+        # number, if not, it's most likely "auto", and this should be fixed
+        # before submission
+        if [ "${no_rootfiles}" -gt 1 ]; then
+            if ! [[ "${sample_entries}" =~ ^[0-9]+$ ]]; then
+                echo "The number of entries for ${sample_nick} is ${sample_entries},"
+                echo "which is not a number. Since the number of rootfiles is"
+                echo "larger than 1, I need the total number of events."
+                echo "Exit."
+                exit 1
+            fi
+        fi
     done
 done
 
