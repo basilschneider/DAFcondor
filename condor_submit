@@ -22,8 +22,9 @@ TTIncl=(configSkimmer_v342pre07.txt TT_TuneCUETP8M2T4)
 # Samples that are commented out with a $ will be picked up
 # Samples that are commented out with two $$ will not be picked up
 #samples=("${Bj[@]}" "${tt[@]}" "${DY2[@]}" "${Wj2[@]}" "${WW[@]}" "${TChiWZ[@]}")
-samples=("${DYnJets[@]}" "${DYM10to50[@]}" "${WjnJets[@]}" "${TTIncl[@]}" "${TChiWZ[@]}")
+#samples=("${DYnJets[@]}" "${DYM10to50[@]}" "${WjnJets[@]}" "${TTIncl[@]}" "${TChiWZ[@]}")
 #samples=("${Bj[@]}")
+samples=("${DYnJets[@]}" "${DYM10to50[@]}" "${WjnJets[@]}" "${TTIncl[@]}" "${TChiWZ[@]}" "${Bj[@]}" "${tt[@]}" "${DY2[@]}" "${Wj2[@]}" "${WW[@]}")
 
 # Fill default values to submission script
 cat << EOF >> "${name_submission_script}"
